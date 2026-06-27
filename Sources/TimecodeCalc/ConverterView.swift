@@ -1,0 +1,98 @@
+import SwiftUI
+import AppKit
+
+struct ConverterView: View {
+    @State private var source      = Timecode(frameRate: .fps25)
+    @State private var fromRate: FrameRate = .fps25
+    @State private var toRate:   FrameRate = .fps2997df
+    @State private var result: Timecode? = nil
+
+    private var computed: Timecode {
+        let tc = Timecode(hours: source.hours, minutes: source.minutes,
+                          seconds: source.seconds, frames: source.frames,
+                          frameRate: fromRate)
+        return tc.converted(to: toRate)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+
+            // Source
+            HStack(spacing: 8) {
+                Text("TC").frame(width: 40, alignment: .trailing).foregroundStyle(.secondary)
+                TimecodeField(timecode: $source)
+                Spacer()
+                Text("from").foregroundStyle(.secondary)
+                fpsPicker(selection: $fromRate)
+            }
+
+            // Target fps
+            HStack(spacing: 8) {
+                Spacer().frame(width: 40)
+                Spacer()
+                Text("to").foregroundStyle(.secondary)
+                fpsPicker(selection: $toRate)
+            }
+
+            Divider()
+
+            // Result
+            HStack(spacing: 12) {
+                Text("=")
+                    .font(.system(size: 18, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(Color.argoGold)
+                Text((result ?? computed).description)
+                    .font(.system(size: 18, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(.primary)
+                Spacer()
+                deltaLabel
+                Button { copyResult() } label: { Image(systemName: "doc.on.doc") }
+                    .buttonStyle(.borderless)
+                    .help("Copy result (⌘C)")
+                    .keyboardShortcut("c", modifiers: .command)
+            }
+            .padding(.vertical, 4)
+
+            HStack(spacing: 12) {
+                Spacer()
+                Button("Clear") { clear() }
+                    .keyboardShortcut(.delete, modifiers: .command)
+                Button("Convert") { convert() }
+                    .keyboardShortcut(.return, modifiers: .command)
+                    .buttonStyle(.borderedProminent)
+                    .tint(Color.argoGold)
+            }
+        }
+        .padding()
+        .onChange(of: fromRate) { _, newRate in
+            source.frameRate = newRate
+            result = nil
+        }
+    }
+
+    private var deltaLabel: some View {
+        let src   = Timecode(hours: source.hours, minutes: source.minutes,
+                             seconds: source.seconds, frames: source.frames,
+                             frameRate: fromRate)
+        let res   = result ?? computed
+        let delta = res.totalFrames - src.totalFrames
+        let sign  = delta >= 0 ? "+" : ""
+        return Text("Δ \(sign)\(delta) fr")
+            .font(.system(size: 12, design: .monospaced))
+            .foregroundStyle(.secondary)
+    }
+
+    private func convert()     { result = computed }
+    private func clear()       { source = Timecode(frameRate: fromRate); result = nil }
+    private func copyResult()  {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString((result ?? computed).description, forType: .string)
+    }
+
+    private func fpsPicker(selection: Binding<FrameRate>) -> some View {
+        Picker("", selection: selection) {
+            ForEach(FrameRate.allCases) { fps in Text(fps.rawValue).tag(fps) }
+        }
+        .frame(width: 120)
+    }
+}
