@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import TimecodeCore
 
 struct DurationView: View {
     @State private var inTC  = Timecode(frameRate: .fps25)

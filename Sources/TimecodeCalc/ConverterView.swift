@@ -1,16 +1,26 @@
 import SwiftUI
 import AppKit
+import TimecodeCore
+
+enum ConvertMode: String, CaseIterable {
+    case realtime = "Realtime"   // same wall-clock instant (speed change)
+    case frame    = "Frame"      // same frame index (conform / relabel)
+}
 
 struct ConverterView: View {
     @State private var source      = Timecode(frameRate: .fps25)
     @State private var fromRate: FrameRate = .fps25
     @State private var toRate:   FrameRate = .fps2997df
+    @State private var mode: ConvertMode = .realtime
 
     private var computed: Timecode {
         let tc = Timecode(hours: source.hours, minutes: source.minutes,
                           seconds: source.seconds, frames: source.frames,
                           frameRate: fromRate)
-        return tc.converted(to: toRate)
+        switch mode {
+        case .realtime: return tc.converted(to: toRate)
+        case .frame:    return tc.reinterpreted(at: toRate)
+        }
     }
 
     var body: some View {
@@ -31,6 +41,20 @@ struct ConverterView: View {
                 Spacer()
                 Text("to").foregroundStyle(.secondary)
                 fpsPicker(selection: $toRate)
+            }
+
+            // Conversion mode
+            HStack(spacing: 8) {
+                Text("mode").frame(width: 40, alignment: .trailing).foregroundStyle(.secondary)
+                Picker("", selection: $mode) {
+                    ForEach(ConvertMode.allCases, id: \.self) { m in Text(m.rawValue).tag(m) }
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 180)
+                Spacer()
+                Text(mode == .realtime ? "same instant" : "same frame #")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.tertiary)
             }
 
             Divider()

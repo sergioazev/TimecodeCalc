@@ -1,4 +1,5 @@
 import SwiftUI
+import TimecodeCore
 
 // HH:MM:SS[:;]FF input.
 // Each component is a plain SwiftUI TextField. FocusState lives here so it
@@ -90,9 +91,23 @@ struct TimecodeField: View {
                 }
             }
 
-            // ── Text change: auto-advance after 2 digits ─────────────
+            // ── Text change: whole-TC paste, else auto-advance after 2 digits ──
             .onChange(of: txt.wrappedValue) { _, new in
                 guard typing == f else { return }
+
+                // A separator or more than two digits means a full timecode was
+                // pasted (e.g. "01:02:03:04" or "01020304" from Avid/Resolve).
+                if new.contains(where: { $0 == ":" || $0 == ";" || $0 == "." })
+                    || new.filter(\.isNumber).count > 2 {
+                    if let pasted = Timecode(parsing: new, frameRate: timecode.frameRate) {
+                        timecode = pasted
+                        typing  = nil
+                        focused = nil
+                        syncAll()
+                        return
+                    }
+                }
+
                 let digits = new.filter(\.isNumber)
                 guard digits.count >= 2 else { return }
                 let num = min(Int(String(digits.suffix(2))) ?? 0, max)

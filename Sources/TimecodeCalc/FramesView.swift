@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import TimecodeCore
 
 enum FramesDirection: String, CaseIterable {
     case framesToTC = "Frames → TC"
