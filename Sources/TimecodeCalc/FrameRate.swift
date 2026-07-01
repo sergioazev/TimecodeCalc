@@ -65,4 +65,9 @@ enum FrameRate: String, CaseIterable, Identifiable, Hashable {
     var framesPerDropMin: Int {
         nominalFps * 60 - dropCount
     }
+
+    // Frames in 24 hours (additions wrap past midnight)
+    var framesPerDay: Int {
+        isDropFrame ? 24 * 6 * framesPer10Min : nominalFps * 86_400
+    }
 }

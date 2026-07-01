@@ -6,7 +6,6 @@ struct TimecodeCalcApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .onAppear { setupArgoGoldColor() }
         }
         .windowStyle(.titleBar)
         .windowResizability(.contentSize)
@@ -16,10 +15,4 @@ struct TimecodeCalcApp: App {
             CommandGroup(replacing: .newItem) {}
         }
     }
-}
-
-// Register the "ArgoGold" named color programmatically so SwiftUI Color.argoGold works
-// without an asset catalog.
-private func setupArgoGoldColor() {
-    // This is a no-op — the actual color is defined in Color+Argo.swift below.
 }

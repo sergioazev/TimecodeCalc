@@ -38,9 +38,18 @@ struct TimecodeField: View {
         }
         // Sync display texts when values change externally (e.g. Clear button)
         .onChange(of: timecode) { _, tc in
+            // Snap invalid drop-frame entries (e.g. 00:01:00;00) to the
+            // next valid TC — this write re-triggers onChange for the sync.
+            if !tc.isValidDropFrame {
+                timecode.frames = tc.frameRate.dropCount
+                return
+            }
             if typing == nil {
-                hhTxt = fmt(tc.hours);   mmTxt = fmt(tc.minutes)
-                ssTxt = fmt(tc.seconds); ffTxt = fmt(tc.frames)
+                syncAll()
+            } else if typing != .ff {
+                // A snap may have changed frames while another field is
+                // being typed — keep the FF display honest.
+                ffTxt = fmt(tc.frames)
             }
         }
         // Clamp frames when fps changes

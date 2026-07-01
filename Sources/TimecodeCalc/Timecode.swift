@@ -76,7 +76,9 @@ struct Timecode: Equatable, CustomStringConvertible {
     // MARK: - Arithmetic
 
     static func + (lhs: Timecode, rhs: Timecode) -> Timecode {
-        Timecode(totalFrames: lhs.totalFrames + rhs.totalFrames, frameRate: lhs.frameRate)
+        // Wrap past midnight, like a deck/NLE counter
+        let sum = (lhs.totalFrames + rhs.totalFrames) % lhs.frameRate.framesPerDay
+        return Timecode(totalFrames: sum, frameRate: lhs.frameRate)
     }
 
     static func - (lhs: Timecode, rhs: Timecode) -> Timecode {
@@ -102,14 +104,13 @@ struct Timecode: Equatable, CustomStringConvertible {
         "\(totalFrames) fr"
     }
 
-    var durationString: String {
-        let total = totalFrames
-        let N = frameRate.nominalFps
-        let ff = total % N
-        let ss = (total / N) % 60
-        let mm = (total / N / 60) % 60
-        let hh = total / N / 3600
-        return String(format: "%02d:%02d:%02d:%02d", hh, mm, ss, ff)
+    // MARK: - Drop-frame validity
+
+    // In DF, frames 0..<dropCount are skipped at the start of every minute
+    // that is not a multiple of 10 (e.g. 00:01:00;00 and ;01 don't exist).
+    var isValidDropFrame: Bool {
+        guard frameRate.isDropFrame else { return true }
+        return !(seconds == 0 && minutes % 10 != 0 && frames < frameRate.dropCount)
     }
 }
 

@@ -5,7 +5,6 @@ struct DurationView: View {
     @State private var inTC  = Timecode(frameRate: .fps25)
     @State private var outTC = Timecode(frameRate: .fps25)
     @State private var frameRate: FrameRate = .fps25
-    @State private var result: Timecode? = nil
 
     private var computed: Timecode {
         let inT  = Timecode(hours: inTC.hours, minutes: inTC.minutes,
@@ -36,21 +35,21 @@ struct DurationView: View {
                 Text("Dur")
                     .font(.system(size: 18, weight: .semibold, design: .monospaced))
                     .foregroundStyle(Color.argoGold)
-                Text((result ?? computed).description)
+                Text(computed.description)
                     .font(.system(size: 18, weight: .semibold, design: .monospaced))
                 Spacer()
-                Text((result ?? computed).frameCountString)
+                Text(computed.frameCountString)
                     .font(.system(size: 12, design: .monospaced))
                     .foregroundStyle(.secondary)
                 Button { copyResult() } label: { Image(systemName: "doc.on.doc") }
                     .buttonStyle(.borderless)
-                    .help("Copy result (⌘C)")
-                    .keyboardShortcut("c", modifiers: .command)
+                    .help("Copy result (⇧⌘C)")
+                    .keyboardShortcut("c", modifiers: [.command, .shift])
             }
             .padding(.vertical, 4)
 
             // Real-time seconds display
-            let dur = result ?? computed
+            let dur = computed
             let secs = Double(dur.totalFrames) / frameRate.exactFps
             Text(String(format: "%.3f seconds  ·  %d frames", secs, dur.totalFrames))
                 .font(.system(size: 11, design: .monospaced))
@@ -60,25 +59,19 @@ struct DurationView: View {
                 Spacer()
                 Button("Clear") { clear() }
                     .keyboardShortcut(.delete, modifiers: .command)
-                Button("Calculate") { calculate() }
-                    .keyboardShortcut(.return, modifiers: .command)
-                    .buttonStyle(.borderedProminent)
-                    .tint(Color.argoGold)
             }
         }
         .padding()
         .onChange(of: frameRate) { _, rate in
             inTC.frameRate  = rate
             outTC.frameRate = rate
-            result = nil
         }
     }
 
-    private func calculate()  { result = computed }
-    private func clear()      { inTC = .zero(at: frameRate); outTC = .zero(at: frameRate); result = nil }
+    private func clear()      { inTC = .zero(at: frameRate); outTC = .zero(at: frameRate) }
     private func copyResult() {
         NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString((result ?? computed).description, forType: .string)
+        NSPasteboard.general.setString(computed.description, forType: .string)
     }
 
     @ViewBuilder

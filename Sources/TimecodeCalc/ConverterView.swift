@@ -5,7 +5,6 @@ struct ConverterView: View {
     @State private var source      = Timecode(frameRate: .fps25)
     @State private var fromRate: FrameRate = .fps25
     @State private var toRate:   FrameRate = .fps2997df
-    @State private var result: Timecode? = nil
 
     private var computed: Timecode {
         let tc = Timecode(hours: source.hours, minutes: source.minutes,
@@ -41,15 +40,15 @@ struct ConverterView: View {
                 Text("=")
                     .font(.system(size: 18, weight: .semibold, design: .monospaced))
                     .foregroundStyle(Color.argoGold)
-                Text((result ?? computed).description)
+                Text(computed.description)
                     .font(.system(size: 18, weight: .semibold, design: .monospaced))
                     .foregroundStyle(.primary)
                 Spacer()
                 deltaLabel
                 Button { copyResult() } label: { Image(systemName: "doc.on.doc") }
                     .buttonStyle(.borderless)
-                    .help("Copy result (⌘C)")
-                    .keyboardShortcut("c", modifiers: .command)
+                    .help("Copy result (⇧⌘C)")
+                    .keyboardShortcut("c", modifiers: [.command, .shift])
             }
             .padding(.vertical, 4)
 
@@ -57,16 +56,11 @@ struct ConverterView: View {
                 Spacer()
                 Button("Clear") { clear() }
                     .keyboardShortcut(.delete, modifiers: .command)
-                Button("Convert") { convert() }
-                    .keyboardShortcut(.return, modifiers: .command)
-                    .buttonStyle(.borderedProminent)
-                    .tint(Color.argoGold)
             }
         }
         .padding()
         .onChange(of: fromRate) { _, newRate in
             source.frameRate = newRate
-            result = nil
         }
     }
 
@@ -74,19 +68,17 @@ struct ConverterView: View {
         let src   = Timecode(hours: source.hours, minutes: source.minutes,
                              seconds: source.seconds, frames: source.frames,
                              frameRate: fromRate)
-        let res   = result ?? computed
-        let delta = res.totalFrames - src.totalFrames
+        let delta = computed.totalFrames - src.totalFrames
         let sign  = delta >= 0 ? "+" : ""
         return Text("Δ \(sign)\(delta) fr")
             .font(.system(size: 12, design: .monospaced))
             .foregroundStyle(.secondary)
     }
 
-    private func convert()     { result = computed }
-    private func clear()       { source = Timecode(frameRate: fromRate); result = nil }
+    private func clear()       { source = Timecode(frameRate: fromRate) }
     private func copyResult()  {
         NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString((result ?? computed).description, forType: .string)
+        NSPasteboard.general.setString(computed.description, forType: .string)
     }
 
     private func fpsPicker(selection: Binding<FrameRate>) -> some View {
