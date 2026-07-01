@@ -1,6 +1,6 @@
 import Foundation
 
-enum FrameRate: String, CaseIterable, Identifiable, Hashable {
+public enum FrameRate: String, CaseIterable, Identifiable, Hashable {
     case fps23976  = "23.976"
     case fps24     = "24"
     case fps25     = "25"
@@ -12,9 +12,9 @@ enum FrameRate: String, CaseIterable, Identifiable, Hashable {
     case fps5994df = "59.94 DF"
     case fps60     = "60"
 
-    var id: String { rawValue }
+    public var id: String { rawValue }
 
-    var nominalFps: Int {
+    public var nominalFps: Int {
         switch self {
         case .fps23976:           return 24
         case .fps24:              return 24
@@ -27,7 +27,7 @@ enum FrameRate: String, CaseIterable, Identifiable, Hashable {
         }
     }
 
-    var exactFps: Double {
+    public var exactFps: Double {
         switch self {
         case .fps23976:           return 24_000.0 / 1_001.0
         case .fps24:              return 24.0
@@ -40,12 +40,12 @@ enum FrameRate: String, CaseIterable, Identifiable, Hashable {
         }
     }
 
-    var isDropFrame: Bool {
+    public var isDropFrame: Bool {
         self == .fps2997df || self == .fps5994df
     }
 
     // Frames dropped per minute (0 for NDF, 2 for 29.97 DF, 4 for 59.94 DF)
-    var dropCount: Int {
+    public var dropCount: Int {
         switch self {
         case .fps2997df: return 2
         case .fps5994df: return 4
@@ -54,20 +54,20 @@ enum FrameRate: String, CaseIterable, Identifiable, Hashable {
     }
 
     // SMPTE separator: semicolon for DF, colon for NDF
-    var separator: String { isDropFrame ? ";" : ":" }
+    public var separator: String { isDropFrame ? ";" : ":" }
 
     // Frames in a 10-minute block (used by DF math)
-    var framesPer10Min: Int {
+    public var framesPer10Min: Int {
         nominalFps * 600 - 9 * dropCount
     }
 
     // Frames in a non-first drop minute
-    var framesPerDropMin: Int {
+    public var framesPerDropMin: Int {
         nominalFps * 60 - dropCount
     }
 
     // Frames in 24 hours (additions wrap past midnight)
-    var framesPerDay: Int {
+    public var framesPerDay: Int {
         isDropFrame ? 24 * 6 * framesPer10Min : nominalFps * 86_400
     }
 }
